@@ -7,13 +7,16 @@ module Obelisk.Backend
   ) where
 
 import Control.Lens
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC8
 import Data.Default (Default (..))
+import Data.Semigroup ((<>))
+import System.IO (BufferMode (..), hSetBuffering, stderr)
+
 import Obelisk.Asset.Serve.Snap (serveAssets)
 import Obelisk.Snap
 import Reflex.Dom
-import System.IO (hSetBuffering, stderr, BufferMode (..))
-import Snap (httpServe, defaultConfig, commandLineConfig, route)
+import Snap (Snap, commandLineConfig, defaultConfig, httpServe, route)
 import Snap.Internal.Http.Server.Config (Config (accessLog, errorLog), ConfigLog (ConfigIoLog))
 
 --TODO: Add a link to a large explanation of the idea of using 'def'
@@ -27,8 +30,8 @@ instance Default BackendConfig where
   def = BackendConfig (return ())
 
 -- | Start an Obelisk backend
-backend :: BackendConfig -> IO ()
-backend cfg = do
+backend :: BackendConfig -> [(BS.ByteString, Snap ())] -> IO ()
+backend cfg hdlrs = do
   -- Make output more legible by decreasing the likelihood of output from
   -- multiple threads being interleaved
   hSetBuffering stderr LineBuffering
@@ -42,7 +45,7 @@ backend cfg = do
         }
       appCfg = def & appConfig_initialHead .~ headHtml
   -- Start the web server
-  httpServe httpConf $ route
+  httpServe httpConf $ route $ hdlrs <>
     [ ("", serveApp "" appCfg)
     , ("", serveAssets "frontend.jsexe.assets" "frontend.jsexe") --TODO: Can we prevent naming conflicts between frontend.jsexe and static?
     , ("", serveAssets "static.assets" "static")
