@@ -44,9 +44,10 @@ backend cfg hdlrs = do
         , errorLog = Just $ ConfigIoLog BSC8.putStrLn
         }
       appCfg = def & appConfig_initialHead .~ headHtml
+      routes =
+        [ ("", serveApp "" appCfg)
+        , ("", serveAssets "frontend.jsexe.assets" "frontend.jsexe") --TODO: Can we prevent naming conflicts between frontend.jsexe and static?
+        , ("", serveAssets "static.assets" "static")
+        ] <> hdlrs
   -- Start the web server
-  httpServe httpConf $ route $ hdlrs <>
-    [ ("", serveApp "" appCfg)
-    , ("", serveAssets "frontend.jsexe.assets" "frontend.jsexe") --TODO: Can we prevent naming conflicts between frontend.jsexe and static?
-    , ("", serveAssets "static.assets" "static")
-    ]
+  httpServe httpConf $ route routes
