@@ -4,6 +4,7 @@ module Obelisk.Backend
   , BackendConfig (..)
   -- * Re-exports
   , Default (def)
+  , initObelisk
   ) where
 
 import Control.Lens
@@ -35,15 +36,23 @@ backend cfg = do
 
   -- Get the web server configuration from the command line
   cmdLineConf <- commandLineConfig defaultConfig
-  headHtml <- fmap snd $ renderStatic $ _backendConfig_head cfg
   let httpConf = cmdLineConf
         { accessLog = Just $ ConfigIoLog BSC8.putStrLn
         , errorLog = Just $ ConfigIoLog BSC8.putStrLn
         }
-      appCfg = def & appConfig_initialHead .~ headHtml
   -- Start the web server
-  httpServe httpConf $ route
-    [ ("", serveApp "" appCfg)
-    , ("", serveAssets "frontend.jsexe.assets" "frontend.jsexe") --TODO: Can we prevent naming conflicts between frontend.jsexe and static?
-    , ("", serveAssets "static.assets" "static")
-    ]
+  httpServe httpConf =<< obeliskRoutes cfg
+
+initObelisk :: BackendConfig -> SnapletInit b ObeliskState
+initObelisk cfg = makeSnaplet "obelisk" "" Nothing $ do
+    addRoutes =<< liftIO obeliskRoutes
+
+obeliskRoutes :: BackendConfig -> IO Int
+obeliskRoutes cfg = do
+    headHtml <- fmap snd $ renderStatic $ _backendConfig_head cfg
+    let appCfg = def & appConfig_initialHead .~ headHtml
+    return
+      [ ("", serveApp "" appCfg)
+      , ("", serveAssets "frontend.jsexe.assets" "frontend.jsexe") --TODO: Can we prevent naming conflicts between frontend.jsexe and static?
+      , ("", serveAssets "static.assets" "static")
+      ]
