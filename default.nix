@@ -2,6 +2,8 @@
 , profiling ? false
 , iosSdkVersion ? "10.2"
 , config ? {}
+, filterPaths ? []
+, backendServicePath ? (ps: [])
 }:
 let
   cleanSource = builtins.filterSource (name: _: let baseName = builtins.baseNameOf name; in !(
@@ -131,7 +133,7 @@ in rec {
   inherit (reflex-platform) nixpkgs pinBuildInputs;
   inherit (nixpkgs) lib;
   pathGit = ./.;  # Used in CI by the migration graph hash algorithm to correctly ignore files.
-  path = reflex-platform.filterGit ./.;
+  path = builtins.filterSource (path: type: !(builtins.any (x: x == baseNameOf path) ([".git" "tags" "TAGS" "dist"] ++ filterPaths))) ./.;
   obelisk = ghcObelisk;
   obeliskEnvs = ghcObeliskEnvs;
   command = ghcObelisk.obelisk-command;
@@ -214,6 +216,7 @@ in rec {
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
         restartIfChanged = true;
+        path = backendServicePath pkgs;
         script = ''
           ln -sft . '${exe}'/*
           mkdir -p log
