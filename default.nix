@@ -2,6 +2,7 @@
 , profiling ? false
 , iosSdkVersion ? "10.2"
 , config ? {}
+, backendInstalledPackages ? (pkgs: [])
 }:
 let
   cleanSource = builtins.filterSource (name: _: let baseName = builtins.baseNameOf name; in !(
@@ -207,7 +208,7 @@ in rec {
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
         restartIfChanged = true;
-        path = [ pkgs.gnutar ];
+        path = backendInstalledPackages pkgs;
         script = ''
           ln -sft . '${exe}'/*
           mkdir -p log
