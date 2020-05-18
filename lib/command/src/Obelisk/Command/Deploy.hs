@@ -28,7 +28,7 @@ import System.Directory
 import System.Environment (getEnvironment)
 import System.FilePath
 import System.IO
-import System.Posix.Files
+import System.PosixCompat.Files
 import System.Process (delegate_ctlc, env, proc, cwd)
 import Text.URI (URI)
 import qualified Text.URI as URI

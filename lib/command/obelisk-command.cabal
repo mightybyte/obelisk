@@ -44,7 +44,7 @@ library
     , text
     , time
     , transformers
-    , unix
+    , unix-compat
     , unordered-containers
     , which
     , yaml

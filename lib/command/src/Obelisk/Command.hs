@@ -27,7 +27,7 @@ import System.Environment
 import System.FilePath
 import qualified System.Info
 import System.IO (hIsTerminalDevice, stdout)
-import System.Posix.Process (executeFile)
+import System.Process (rawSystem)
 import qualified Text.ParserCombinators.ReadP as P
 
 import Obelisk.App
@@ -360,7 +360,9 @@ main' argsCfg = do
         Just impl -> do
           -- Invoke the real implementation, using --no-handoff to prevent infinite recursion
           putLog Debug $ "Handing off to " <> T.pack impl
-          liftIO $ executeFile impl False ("--no-handoff" : myArgs) Nothing
+          --liftIO $ executeFile impl False ("--no-handoff" : myArgs) Nothing
+          _ <- liftIO $ rawSystem impl ("--no-handoff" : myArgs)
+          return ()
   case myArgs of
     "--no-handoff" : as -> go as -- If we've been told not to hand off, don't hand off
     a:as -- Otherwise bash completion would always hand-off even if the user isn't trying to
